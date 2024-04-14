@@ -14,8 +14,39 @@ namespace Extra.Tests
     public abstract class BrowserDefault : IDisposable
     {
         private readonly List<IBrowser> _launchedBrowsers = new List<IBrowser>();
+
         protected BrowserDefault()
         {
+        }
+
+        public void Dispose()
+        {
+            foreach (var launchedBrowser in _launchedBrowsers)
+            {
+                launchedBrowser.CloseAsync().Wait();
+            }
+        }
+
+        protected LaunchOptions CreateDefaultOptions()
+        {
+            return new LaunchOptions()
+            {
+                ExecutablePath = Constants.PathToChrome,
+                Headless = Constants.Headless
+            };
+        }
+
+        protected async Task<IPage> LaunchAndGetPage(PuppeteerExtraPlugin plugin = null)
+        {
+            IBrowser browser = null;
+            if (plugin != null)
+                browser = await LaunchWithPluginAsync(plugin);
+            else
+                browser = await LaunchAsync();
+
+            var page = (await browser.PagesAsync())[0];
+
+            return page;
         }
 
         protected async Task<IBrowser> LaunchAsync(LaunchOptions options = null)
@@ -39,20 +70,6 @@ namespace Extra.Tests
             return browser;
         }
 
-        protected async Task<IPage> LaunchAndGetPage(PuppeteerExtraPlugin plugin = null)
-        {
-            IBrowser browser = null;
-            if (plugin != null)
-                browser = await LaunchWithPluginAsync(plugin);
-            else
-                browser = await LaunchAsync();
-
-            var page = (await browser.PagesAsync())[0];
-
-            return page;
-        }
-
-
         private async void DownloadChromeIfNotExists()
         {
             if (File.Exists(Constants.PathToChrome))
@@ -61,24 +78,7 @@ namespace Extra.Tests
             await new BrowserFetcher(new BrowserFetcherOptions()
             {
                 Path = Constants.PathToChrome
-            }).DownloadAsync(BrowserFetcher.DefaultChromiumRevision);
-        }
-
-        protected LaunchOptions CreateDefaultOptions()
-        {
-            return new LaunchOptions()
-            {
-                ExecutablePath = Constants.PathToChrome,
-                Headless = Constants.Headless
-            };
-        }
-
-        public void Dispose()
-        {
-            foreach (var launchedBrowser in _launchedBrowsers)
-            {
-                launchedBrowser.CloseAsync().Wait();
-            }
+            }).DownloadAsync(BrowserTag.Latest);
         }
     }
 }
