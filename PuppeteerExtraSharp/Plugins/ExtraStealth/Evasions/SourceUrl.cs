@@ -10,7 +10,7 @@ public class SourceUrl : PuppeteerExtraPlugin
     {
     }
 
-    public override async Task OnPageCreated(IPage page)
+    public override Task OnPageCreated(IPage page)
     {
         var mainWordProperty =
             page.MainFrame.GetType().GetProperty("MainWorld", BindingFlags.NonPublic
@@ -31,5 +31,7 @@ public class SourceUrl : PuppeteerExtraPlugin
                 suffixField?.SetValue(execution, "//# sourceURL=''");
             }
         };
+
+        return Task.CompletedTask;
     }
 }
