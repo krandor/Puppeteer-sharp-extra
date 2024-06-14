@@ -13,7 +13,27 @@ jobs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 8.0.x
+        cache: true
     - name: Restore dependencies
       run: dotnet restore **/*.sln
     - name: Build
       run: dotnet build --no-restore **/*.sln
+
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.0.x'
+          source-url: https://nuget.pkg.github.com/krandor/index.json
+        env:
+          NUGET_AUTH_TOKEN: ${{secrets.NUGET_TOKEN}}
+      - run: dotnet build --configuration Release **/*.sln
+      - name: Create the package
+        run: dotnet pack --configuration Release **/*.sln
+      - name: Publish the package to GPR
+        run: dotnet nuget push **/bin/Release/*.nupkg
