@@ -1,7 +1,6 @@
-﻿namespace PuppeteerExtraSharp.Plugins.Recaptcha
+﻿namespace PuppeteerExtraSharp.Plugins.Recaptcha;
+
+public class CaptchaCfg
 {
-    public class CaptchaCfg
-    {
-        public string callback { get; set; }
-    }
+    public string callback { get; set; }
 }

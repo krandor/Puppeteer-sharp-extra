@@ -1,31 +1,30 @@
-﻿using System.Collections.Generic;
+﻿namespace PuppeteerExtraSharp.Plugins.ExtraStealth;
+
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using PuppeteerExtraSharp.Utils;
 using PuppeteerSharp;
 
-namespace PuppeteerExtraSharp.Plugins.ExtraStealth
+internal static class Utils
 {
-    internal static class Utils
+    public static Task EvaluateOnNewPage(IPage page, string script, params object[] args)
     {
-        public static Task EvaluateOnNewPage(IPage page, string script, params object[] args)
+        if (!page.IsClosed)
         {
-            if (!page.IsClosed)
-                return page.EvaluateFunctionOnNewDocumentAsync(script, args);
-            
-            return Task.CompletedTask;
+            return page.EvaluateFunctionOnNewDocumentAsync(script, args);
         }
 
+        return Task.CompletedTask;
+    }
 
-        public static string GetScript(string name)
-        {
-            var builder = new StringBuilder(typeof(Utils).Namespace);
-            builder.Append(".Scripts");
-            builder.Append("." + name);
 
-            var file = ResourcesReader.ReadFile(builder.ToString());
-            return file;
-        }
+    public static string GetScript(string name)
+    {
+        var builder = new StringBuilder(typeof(Utils).Namespace);
+        builder.Append(".Scripts");
+        builder.Append("." + name);
+
+        var file = ResourcesReader.ReadFile(builder.ToString());
+        return file;
     }
 }

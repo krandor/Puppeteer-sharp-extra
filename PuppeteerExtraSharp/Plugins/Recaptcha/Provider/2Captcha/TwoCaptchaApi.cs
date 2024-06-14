@@ -1,52 +1,49 @@
-﻿using System.Collections.Generic;
+﻿namespace PuppeteerExtraSharp.Plugins.Recaptcha.Provider._2Captcha;
+
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using PuppeteerExtraSharp.Plugins.Recaptcha.Provider._2Captcha.Models;
 using PuppeteerExtraSharp.Plugins.Recaptcha.RestClient;
-using PuppeteerExtraSharp.Utils;
 using RestSharp;
 
-namespace PuppeteerExtraSharp.Plugins.Recaptcha.Provider._2Captcha
+internal class TwoCaptchaApi
 {
-    internal class TwoCaptchaApi
+    private readonly Plugins.Recaptcha.RestClient.RestClient _client = new Plugins.Recaptcha.RestClient.RestClient("https://rucaptcha.com");
+    private readonly ProviderOptions _options;
+    private readonly string _userKey;
+
+    public TwoCaptchaApi(string userKey, ProviderOptions options)
     {
-        private readonly RestClient.RestClient _client = new RestClient.RestClient("https://rucaptcha.com");
-        private readonly string _userKey;
-        private readonly ProviderOptions _options;
+        this._userKey = userKey;
+        this._options = options;
+    }
 
-        public TwoCaptchaApi(string userKey, ProviderOptions options)
+    public async Task<TwoCaptchaResponse> CreateTaskAsync(string key, string pageUrl)
+    {
+        var result = await this._client.PostWithQueryAsync<TwoCaptchaResponse>("in.php", new Dictionary<string, string>()
         {
-            _userKey = userKey;
-            _options = options;
-        }
+            ["key"] = this._userKey,
+            ["googlekey"] = key,
+            ["pageurl"] = pageUrl,
+            ["json"] = "1",
+            ["method"] = "userrecaptcha"
+        });
 
-        public async Task<TwoCaptchaResponse> CreateTaskAsync(string key, string pageUrl)
-        {
-            var result = await _client.PostWithQueryAsync<TwoCaptchaResponse>("in.php", new Dictionary<string, string>()
-            {
-                ["key"] = _userKey,
-                ["googlekey"] = key,
-                ["pageurl"] = pageUrl,
-                ["json"] = "1",
-                ["method"] = "userrecaptcha"
-            });
+        return result;
+    }
 
-            return result;
-        }
+    public async Task<RestResponse<TwoCaptchaResponse>> GetSolution(string id)
+    {
+        var request = new RestRequest("res.php") { Method = Method.Post };
 
+        request.AddQueryParameter("id", id);
+        request.AddQueryParameter("key", this._userKey);
+        request.AddQueryParameter("action", "get");
+        request.AddQueryParameter("json", "1");
 
-        public async Task<RestResponse<TwoCaptchaResponse>> GetSolution(string id)
-        {
-            var request = new RestRequest("res.php") {Method = Method.Post};
+        var result = await this._client.CreatePollingBuilder<TwoCaptchaResponse>(request).TriesLimit(this._options.PendingCount).ActivatePollingAsync(
+            response => response.Data.request == "CAPCHA_NOT_READY" ? PollingAction.ContinuePolling : PollingAction.Break);
 
-            request.AddQueryParameter("id", id);
-            request.AddQueryParameter("key", _userKey);
-            request.AddQueryParameter("action", "get");
-            request.AddQueryParameter("json", "1");
-
-            var result = await _client.CreatePollingBuilder<TwoCaptchaResponse>(request).TriesLimit(_options.PendingCount).ActivatePollingAsync(
-                response => response.Data.request == "CAPCHA_NOT_READY" ? PollingAction.ContinuePolling : PollingAction.Break);
-            
-            return result;
-        }
+        return result;
     }
 }

@@ -1,84 +1,93 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
+﻿namespace Extra.Tests;
+
 using PuppeteerExtraSharp;
 using PuppeteerExtraSharp.Plugins;
 using PuppeteerSharp;
+using PuppeteerSharp.BrowserData;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
-namespace Extra.Tests
+public abstract class BrowserDefault : IDisposable
 {
-    public abstract class BrowserDefault : IDisposable
+    private readonly List<IBrowser> _launchedBrowsers = new List<IBrowser>();
+
+    protected BrowserDefault()
     {
-        private readonly List<IBrowser> _launchedBrowsers = new List<IBrowser>();
+    }
 
-        protected BrowserDefault()
+    public void Dispose()
+    {
+        foreach (var launchedBrowser in this._launchedBrowsers)
         {
+            launchedBrowser.CloseAsync().Wait();
+        }
+    }
+
+    protected LaunchOptions CreateDefaultOptions(string browserPath)
+    {
+        return new LaunchOptions()
+        {
+            Headless = false, // Constants.Headless,
+            ExecutablePath = browserPath,
+        };
+    }
+
+    protected async Task<IPage> LaunchAndGetPage(PuppeteerExtraPlugin plugin = null)
+    {
+        IBrowser browser = null;
+        if (plugin != null)
+        {
+            browser = await this.LaunchWithPluginAsync(plugin);
+        }
+        else
+        {
+            browser = await this.LaunchAsync();
         }
 
-        public void Dispose()
+        var page = (await browser.PagesAsync())[0];
+
+        return page;
+    }
+
+    protected async Task<IBrowser> LaunchAsync(LaunchOptions options = null)
+    {
+        options ??= this.CreateDefaultOptions(await this.DownloadChromeIfNotExists());
+
+        var browser = await Puppeteer.LaunchAsync(options);
+        this._launchedBrowsers.Add(browser);
+        return browser;
+    }
+
+    protected async Task<IBrowser> LaunchWithPluginAsync(PuppeteerExtraPlugin plugin, LaunchOptions options = null)
+    {
+        var extra = new PuppeteerExtra().Use(plugin);
+        options ??= this.CreateDefaultOptions(await this.DownloadChromeIfNotExists());
+
+        var browser = await extra.LaunchAsync(options);
+        this._launchedBrowsers.Add(browser);
+        return browser;
+    }
+
+    private async Task<string> DownloadChromeIfNotExists()
+    {
+        await new BrowserFetcher(new BrowserFetcherOptions()).DownloadAsync(BrowserTag.Latest);
+
+        var supportedBrowser = SupportedBrowser.Chrome;
+
+        using var browserFetcher = new BrowserFetcher(supportedBrowser);
+        var installedBrowsers = browserFetcher.GetInstalledBrowsers();
+        InstalledBrowser selectedBrowser;
+        if (!installedBrowsers.Any())
         {
-            foreach (var launchedBrowser in _launchedBrowsers)
-            {
-                launchedBrowser.CloseAsync().Wait();
-            }
+            selectedBrowser = await browserFetcher.DownloadAsync(BrowserTag.Latest);
+        }
+        else
+        {
+            selectedBrowser = installedBrowsers.FirstOrDefault();
         }
 
-        protected LaunchOptions CreateDefaultOptions()
-        {
-            return new LaunchOptions()
-            {
-                ExecutablePath = Constants.PathToChrome,
-                Headless = Constants.Headless
-            };
-        }
-
-        protected async Task<IPage> LaunchAndGetPage(PuppeteerExtraPlugin plugin = null)
-        {
-            IBrowser browser = null;
-            if (plugin != null)
-                browser = await LaunchWithPluginAsync(plugin);
-            else
-                browser = await LaunchAsync();
-
-            var page = (await browser.PagesAsync())[0];
-
-            return page;
-        }
-
-        protected async Task<IBrowser> LaunchAsync(LaunchOptions options = null)
-        {
-            //DownloadChromeIfNotExists();
-            options ??= CreateDefaultOptions();
-
-            var browser = await Puppeteer.LaunchAsync(options);
-            _launchedBrowsers.Add(browser);
-            return browser;
-        }
-
-        protected async Task<IBrowser> LaunchWithPluginAsync(PuppeteerExtraPlugin plugin, LaunchOptions options = null)
-        {
-            var extra = new PuppeteerExtra().Use(plugin);
-            //DownloadChromeIfNotExists();
-            options ??= CreateDefaultOptions();
-
-            var browser = await extra.LaunchAsync(options);
-            _launchedBrowsers.Add(browser);
-            return browser;
-        }
-
-        private async void DownloadChromeIfNotExists()
-        {
-            if (File.Exists(Constants.PathToChrome))
-                return;
-
-            await new BrowserFetcher(new BrowserFetcherOptions()
-            {
-                Path = Constants.PathToChrome
-            }).DownloadAsync(BrowserTag.Latest);
-        }
+        return selectedBrowser.GetExecutablePath();
     }
 }

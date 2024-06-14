@@ -1,8 +1,7 @@
-﻿namespace PuppeteerExtraSharp.Plugins.Recaptcha
+﻿namespace PuppeteerExtraSharp.Plugins.Recaptcha;
+
+public class RecaptchaResult
 {
-    public class RecaptchaResult
-    {
-        public bool IsSuccess { get; set; } = true;
-        public CaptchaException Exception { get; set; }
-    }
+    public bool IsSuccess { get; set; } = true;
+    public CaptchaException Exception { get; set; }
 }

@@ -1,26 +1,25 @@
-﻿using System.Threading.Tasks;
+﻿namespace PuppeteerExtraSharp.Plugins.Recaptcha;
+
+using System.Threading.Tasks;
 using PuppeteerExtraSharp.Plugins.Recaptcha.Provider;
 using PuppeteerSharp;
 
-namespace PuppeteerExtraSharp.Plugins.Recaptcha
+public class RecaptchaPlugin : PuppeteerExtraPlugin
 {
-    public class RecaptchaPlugin : PuppeteerExtraPlugin
+    private readonly Recaptcha _recaptcha;
+
+    public RecaptchaPlugin(IRecaptchaProvider provider, CaptchaOptions opt = null) : base("recaptcha")
     {
-        private readonly Recaptcha _recaptcha;
+        this._recaptcha = new Recaptcha(provider, opt ?? new CaptchaOptions());
+    }
 
-        public RecaptchaPlugin(IRecaptchaProvider provider, CaptchaOptions opt = null) : base("recaptcha")
-        {
-            _recaptcha = new Recaptcha(provider, opt ?? new CaptchaOptions());
-        }
+    public async Task<RecaptchaResult> SolveCaptchaAsync(IPage page)
+    {
+        return await this._recaptcha.Solve(page);
+    }
 
-        public async Task<RecaptchaResult> SolveCaptchaAsync(IPage page)
-        {
-            return await _recaptcha.Solve(page);
-        }
-
-        public override async Task OnPageCreated(IPage page)
-        {
-            await page.SetBypassCSPAsync(true);
-        }
+    public override async Task OnPageCreated(IPage page)
+    {
+        await page.SetBypassCSPAsync(true);
     }
 }
