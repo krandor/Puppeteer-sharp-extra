@@ -29,7 +29,7 @@ public abstract class BrowserDefault : IDisposable
     {
         return new LaunchOptions()
         {
-            Headless = false, // Constants.Headless,
+            Headless = Constants.Headless,
             ExecutablePath = browserPath,
         };
     }
