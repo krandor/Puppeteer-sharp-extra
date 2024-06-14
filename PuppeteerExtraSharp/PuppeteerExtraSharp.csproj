@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <LangVersion>latest</LangVersion>
-    <Version>2.0.1</Version>
+    <Version>2.0.1-beta</Version>
     <RepositoryUrl>https://github.com/Overmiind/Puppeteer-sharp-extra</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>puppeteer-extra recaptcha browser-automation browser-extension browser puppeteer netcore netcore31 stealth-client browser-testing c#</PackageTags>
@@ -53,7 +53,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="PuppeteerSharp" Version="18.0.1" />
+    <PackageReference Include="PuppeteerSharp" Version="15.1.0" />
     <PackageReference Include="RestSharp" Version="111.2.0" />
   </ItemGroup>
 
