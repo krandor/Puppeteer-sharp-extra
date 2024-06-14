@@ -6,7 +6,7 @@ using Xunit;
 public class ExtraLaunchTest : BrowserDefault
 {
     [Fact]
-    public async void ShouldReturnOkPage()
+    public async System.Threading.Tasks.Task ShouldReturnOkPage()
     {
         var browser = await this.LaunchAsync();
         var page = await browser.NewPageAsync();

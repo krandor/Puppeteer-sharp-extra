@@ -18,18 +18,18 @@ public class AntiCaptchaTests : BrowserDefault
     }
 
     [Fact]
-    public async void ShouldThrowCaptchaExceptionWhenCaptchaNotFound()
+    public async Task ShouldSolveCaptchaWithCallback()
     {
         var plugin = new RecaptchaPlugin(new PuppeteerExtraSharp.Plugins.Recaptcha.Provider.AntiCaptcha.AntiCaptcha(Resources.AntiCaptchaKey));
-
         var browser = await this.LaunchWithPluginAsync(plugin);
-
         var page = await browser.NewPageAsync();
-        await page.GoToAsync("https://lessons.zennolab.com/ru/index");
+        await page.GoToAsync("https://lessons.zennolab.com/captchas/recaptcha/v2_nosubmit.php?level=low");
         var result = await plugin.SolveCaptchaAsync(page);
-        Assert.NotNull(result.Exception);
-        Assert.False(result.IsSuccess);
-        //await browser.CloseAsync();
+
+        Assert.Null(result.Exception);
+
+        await Task.Delay(1000);
+        await this.CheckSuccessVerify(page);
     }
 
     [Fact]
@@ -41,29 +41,29 @@ public class AntiCaptchaTests : BrowserDefault
         var page = await browser.NewPageAsync();
         await page.GoToAsync("https://lessons.zennolab.com/captchas/recaptcha/v2_simple.php?level=low");
         var result = await plugin.SolveCaptchaAsync(page);
-        
+
         Assert.Null(result.Exception);
-        
+
         var button = await page.QuerySelectorAsync("input[type='submit']");
         await button.ClickAsync();
 
-        await page.WaitForTimeoutAsync(1000);
+        await Task.Delay(1000);
         await this.CheckSuccessVerify(page);
     }
 
     [Fact]
-    public async void ShouldSolveCaptchaWithCallback()
+    public async Task ShouldThrowCaptchaExceptionWhenCaptchaNotFound()
     {
         var plugin = new RecaptchaPlugin(new PuppeteerExtraSharp.Plugins.Recaptcha.Provider.AntiCaptcha.AntiCaptcha(Resources.AntiCaptchaKey));
+
         var browser = await this.LaunchWithPluginAsync(plugin);
+
         var page = await browser.NewPageAsync();
-        await page.GoToAsync("https://lessons.zennolab.com/captchas/recaptcha/v2_nosubmit.php?level=low");
+        await page.GoToAsync("https://lessons.zennolab.com/ru/index");
         var result = await plugin.SolveCaptchaAsync(page);
-
-        Assert.Null(result.Exception);
-
-        await page.WaitForTimeoutAsync(1000);
-        await this.CheckSuccessVerify(page);
+        Assert.NotNull(result.Exception);
+        Assert.False(result.IsSuccess);
+        //await browser.CloseAsync();
     }
 
     private async Task CheckSuccessVerify(IPage page)

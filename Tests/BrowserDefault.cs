@@ -76,7 +76,7 @@ public abstract class BrowserDefault : IDisposable
 
         var supportedBrowser = SupportedBrowser.Chrome;
 
-        using var browserFetcher = new BrowserFetcher(supportedBrowser);
+        var browserFetcher = new BrowserFetcher(supportedBrowser);
         var installedBrowsers = browserFetcher.GetInstalledBrowsers();
         InstalledBrowser selectedBrowser;
         if (!installedBrowsers.Any())
